@@ -16,8 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from sensors.views import get_sensor_data
+from accounts.views import get_user_apis
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('sensors/get_sensor_data/',get_sensor_data.as_view(), name='get_sensor_data')
+    path('sensors/get_sensor_data/',get_sensor_data.as_view(), name='get_sensor_data'),
+    path('accounts/get_user_apis/',get_user_apis.as_view(), name='get_user_apis'),
 ]

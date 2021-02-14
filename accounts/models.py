@@ -18,14 +18,15 @@ class hub_acc(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     telephone = models.CharField(max_length=100,null=True)
+    hub_name = models.CharField(max_length=228)
     address_line1 = models.CharField(max_length=100, null=True, blank=True)
     address_line2 = models.CharField(max_length=100, null=True, blank=True)
     registration_date = models.DateTimeField(null=True,editable=False)
     api_key = models.CharField(max_length=128,editable=False, unique=True)
 
-
     def __str__(self):
         return self.user.username +": "+ self.api_key
+
     def save(self, *args, **kwargs):
         if not self.api_key:
             self.registration_date = timezone.now()
@@ -40,12 +41,12 @@ class hub_acc(models.Model):
 class login_history(models.Model):
     account = models.ForeignKey(hub_acc, on_delete=models.CASCADE)
     ip_address = models.GenericIPAddressField()
-    login_time=models.DateTimeField(blank=True)
+    login_time = models.DateTimeField(blank=True)
 
     def __str__(self):
         return self.ip_address
 
     def save(self,*args,**kwargs):
-        self.login_time=timezone.now()
+        self.login_time = timezone.now()
         super(login_history,self).save(*args,**kwargs)
 

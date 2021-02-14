@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <h>{{request.user}}'s apis</h>
+        <dl>
+        {% for i in apis %}
+            <dt>{{i.hub_name}}</dt> <dd>api: {{i.api_key}}</dd>
+        {% endfor %}
+        </dl>
+    </body>
+</html>

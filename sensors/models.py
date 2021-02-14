@@ -12,16 +12,16 @@ class hub_sensors(models.Model):
         (5,'Ambient-light'),
         (6,'Camera'),
     )
-    id=models.AutoField(primary_key=True)
-    owner_hub= models.ManyToManyField(hub_acc)
-    sensor_name=models.CharField(max_length=128, null=True,blank=True)
-    sensor_type=models.PositiveIntegerField(
+    id = models.AutoField(primary_key=True)
+    owner_hub = models.ManyToManyField(hub_acc)
+    sensor_name = models.CharField(max_length=128, null=True,blank=True)
+    sensor_type = models.PositiveIntegerField(
         null = True,
         blank=True,
         choices = sensor_types,
     )
     latest_data = models.JSONField(null=True, blank=True)
-    latest_heartbeat=models.DateTimeField(auto_now_add=True)
+    latest_heartbeat = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.sensor_name

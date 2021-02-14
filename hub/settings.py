@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'sensors',
+    'dboperations.apps.dboperationsConfig'
 ]
 
 MIDDLEWARE = [
@@ -58,6 +59,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [str(BASE_DIR) + '/sensors/templates/',
+                str(BASE_DIR) + '/accounts/templates/',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
