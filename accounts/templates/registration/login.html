@@ -1,0 +1,55 @@
+<!-- accounts/templates/registration/login.html -->
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body{
+            text-align: center;
+            color: rgb(255, 255, 255);
+            background-color: rgb(48, 44, 41);
+        }
+        form {border: 3px solid #ffffff;
+             display: inline-block;
+             
+        }
+        input[type=text], input[type=password] {
+           
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            cursor: pointer;
+            display: block;
+            width: max-content;
+        }
+        .container {
+            padding: 25px;
+            width: min-content;
+        }
+    </style>
+</head>
+<body>
+   <h1>Hub login</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="container">
+            <label for="id_username">Username:</label>
+                <input type="text" name="username" autofocus="" autocapitalize="none" autocomplete="username" maxlength="150" required="" id="id_username">     
+            <label for="id_password">Password:</label>
+                <input type="password" name="password" autocomplete="current-password" required="" id="id_password">
+        </div>
+        <div class="container">
+            <button type="submit">Log In</button>
+        </div>
+    </form> 
+</body>
+</html>
+

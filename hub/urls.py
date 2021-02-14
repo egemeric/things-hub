@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from sensors.views import get_sensor_data
 from accounts.views import get_user_apis
 
@@ -22,4 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('sensors/get_sensor_data/',get_sensor_data.as_view(), name='get_sensor_data'),
     path('accounts/get_user_apis/',get_user_apis.as_view(), name='get_user_apis'),
+    path('accounts/', include('django.contrib.auth.urls')),
 ]
