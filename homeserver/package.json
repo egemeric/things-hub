@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon src/app.js -e ejs,js,css,html,scss"
+    "start": "/usr/sbin/mosquitto -c /mosquitto.conf & nodemon src/app.js -e ejs,js,css,html,scss"
   },
   "keywords": [],
   "author": "",

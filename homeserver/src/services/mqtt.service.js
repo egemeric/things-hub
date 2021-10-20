@@ -1,6 +1,6 @@
 const mqtt = require('mqtt')
 
-const mqtt_host = '10.1.1.144'
+const mqtt_host = '127.0.0.1'
 const mqtt_port = '1883'
 const mqtt_clientId = `mqtt_${Math.random().toString(16).slice(3)}`
 
