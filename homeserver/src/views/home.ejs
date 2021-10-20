@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('dashboard/header') -%>
+</head>
+
+<body class="hold-transition sidebar-mini">
+    <div class="wrapper">
+        <%- include('dashboard/navbar') -%>
+
+    </div>
+    <%- include('dashboard/sidebar') -%>
+        <div class="content-wrapper">
+            <%- include('dashboard/contentHeader',{page}) -%>
+                <div class="content">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <% for(var i=0; i < page.devices.length; i++) { %>
+                                <div class="col-lg-6">
+                                    <div class="card">
+                                        <div class="card-header bg-info"> 
+                                            <strong><h5 class="m-0">Device: <%= page.devices[i]%></h5></strong>
+                                        </div>
+                                        <div class="card-body">
+                                          
+                                            <p class="card-text">
+                                                <%= page.devices[i]%>
+                                            </p>
+                                            <li>
+                                                <ol> Light
+                                                <button class="btn bg-success p-2" onclick="lightRequest('<%= page.devices[i]%>',true);">
+                                                    open
+                                                </button>
+                                                <button class="btn bg-danger p-2" onclick="lightRequest('<%= page.devices[i]%>',false);">
+                                                    close
+                                                </button>
+                                                </ol>
+                                            </li>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% } %>
+
+                        </div>
+                    </div>
+                </div>
+        </div>
+
+
+</body>
+<script>
+    async function lightRequest(devid,open) {
+    let rootPath = window.location.origin;
+    if(open)
+        rootPath += "/api/control/open?devid="+devid;
+    else
+        rootPath += "/api/control/close?devid="+devid;
+
+    console.log("RequestUrl:",rootPath);
+	const fetchOptions = {
+		method: "GET",
+		credentials: "same-origin",
+		
+	};
+	const response = await fetch(rootPath, fetchOptions);
+	
+    if (!response.ok) {
+		const errorMessage = await response.text();
+		throw new Error(errorMessage);
+	}
+
+    console.log("response:",response);
+	
+}
+</script>
+<%- include('dashboard/scripts') -%>
+
+</html>
