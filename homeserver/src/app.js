@@ -1,9 +1,12 @@
+
 const express = require('express')
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const http = require('http');
 const mqtt = require('./services/mqtt.service')
 const routes = require("./routes/index.route")
+const websocket = require('./services/websocket.service')
+const url = require("url")
 var path = require('path');
 const app = express()
 const PORT = 9000
@@ -24,7 +27,21 @@ app.get('/', (req, res) => {
     res.send('Hello Worlds!')
 })
 
-const httpServer = http.createServer(app);
+
+
+const httpServer = http.createServer(app,websocket.wss1);
+
+httpServer.on('upgrade', function upgrade(request, socket, head) {
+    const { pathname } = url.parse(request.url);
+  
+    if (pathname === '/websocket') {
+      websocket.wss1.handleUpgrade(request, socket, head, function done(ws) {
+        websocket.wss1.emit('connection', ws, request);
+      });
+    } else {
+      socket.destroy();
+    }
+  });
 
 httpServer.listen(PORT, HOST)
 console.log(`Running on http://${HOST}:${PORT}`);
