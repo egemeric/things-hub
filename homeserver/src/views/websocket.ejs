@@ -25,8 +25,9 @@
                                 <!-- DIRECT CHAT -->
                                 <div  class="card direct-chat direct-chat-primary">
                                     <div class="card-header">
-                                        <h3 class="card-title">Direct Chat</h3>
-
+                                        <h3 class="card-title">Direct Chat With:</h3> <br>
+                                       
+                                        <span id="chat-with"></span>
                                         <div class="card-tools">
 
                                         </div>
@@ -54,13 +55,6 @@
                                 </div>
                                 <!--/.direct-chat -->
                                 <p id="connection"></p>
-                                <form name="publish">
-                                    <input type="text" name="message">
-                                    <input type="submit" value="Send">
-                                </form>
-
-                                <!-- div with messages -->
-                                <div id="messages"></div>
 
                             </div>
 
@@ -89,7 +83,7 @@
         msgText.textContent = outgoingMessage
         messageElem.appendChild(msgText)
         document.getElementById('direct-chat').append(messageElem);
-        ws.send(outgoingMessage);
+        ws.send(JSON.stringify({"to":messageTo,"message":outgoingMessage}));
         return false;
     };
     ws.onopen = (e) => {
@@ -109,6 +103,9 @@
         }
         if (jsonData.userlist) {
             updateUserlist(jsonData.userlist);
+        }
+        if(jsonData.yourId){
+            document.getElementById('connection').innerHTML+=`<p>your id:${jsonData.yourId}</p>`
         }
         let message = new Date().toTimeString() + ":" + event.data;
         let messageElem = document.createElement('div');
@@ -140,12 +137,15 @@
     };
 
     function updateUserlist(userlist) {
+        document.getElementById('users').innerHTML = ""
         userlist.forEach(element => {
-            let conElem = document.createElement('div')
-            conElem.className = ('bg-info')
-            conElem.textContent = (element)
-            document.getElementById('users').append(conElem);
+            document.getElementById('users').innerHTML += `<p><div class="bg-info p-2" id="${element}"> ${element} <input class="d-block mr-0 ml-auto" style="float: right;" id="${element}" type="button" value="SendMsg" onclick="sendMsg(this.id);" />   </div></p>`;
         });
+    }
+    var messageTo = "";
+    function sendMsg(userId){
+        messageTo = userId;
+        document.getElementById("chat-with").innerHTML = messageTo;
     }
 </script>
 <%- include('dashboard/scripts') -%>

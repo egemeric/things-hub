@@ -11,10 +11,10 @@ wss1.getUniqueID = function () {
 };
 wss1.on('connection', function connection(ws) {
     let parsed
-    ws.id = wss1.getUniqueID();
-    broadcast({"newCon":ws.id}); 
+    ws.id = wss1.getUniqueID();  
     USERS.push(ws.id)
-    ws.send(JSON.stringify({"userlist":USERS}))
+    ws.send(JSON.stringify({'yourId':ws.id}))
+    broadcast({"userlist":USERS}); 
     ws.on('message', function incoming(message) {
         try {
             parsed = JSON.parse(message);
@@ -23,6 +23,9 @@ wss1.on('connection', function connection(ws) {
             ws.send(JSON.stringify({ ok: false }));
             return
         }
+       if(parsed.message && parsed.to){
+           sendMsg(ws.id,parsed.to,parsed.message)
+       }
         
         console.log("parsed json:", parsed);
 
@@ -36,6 +39,16 @@ wss1.on('connection', function connection(ws) {
 
 
 });
+
+function sendMsg(from,to,msg){
+    wss1.clients.forEach(client => {
+        
+        if(to == client.id){
+            client.send(JSON.stringify(msg));
+            console.log("message has been send:",{from,msg})
+        }
+    })
+}
 
 function arrayRemove(arr, value) {
  
