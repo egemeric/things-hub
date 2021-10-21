@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('dashboard/header') -%>
+</head>
+
+<body class="hold-transition sidebar-mini">
+    <div class="wrapper">
+        <%- include('dashboard/navbar') -%>
+
+    </div>
+    <%- include('dashboard/sidebar') -%>
+        <div class="content-wrapper">
+            <%- include('dashboard/contentHeader',{page}) -%>
+                <div class="content">
+                    <div class="container-fluid">
+                        <div class="row">
+
+                            <div id="users" class="col-lg-3">
+                                <h2>Users</h2>
+                            </div>
+                            <div class="col-lg-6">
+
+                                <!-- DIRECT CHAT -->
+                                <div  class="card direct-chat direct-chat-primary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">Direct Chat</h3>
+
+                                        <div class="card-tools">
+
+                                        </div>
+                                    </div>
+                                    <!-- /.card-header -->
+                                    <div  class="card-body">
+                                        <div id="direct-chat" class="direct-chat-messages">
+                                            
+                                        </div>
+                                        <!--/.direct-chat-messages-->
+                                    </div>
+                                    <!-- /.card-body -->
+                                    <div class="card-footer">
+                                        <form name="publish" action="#" method="post">
+                                            <div class="input-group">
+                                                <input type="text" name="message" placeholder="Type Message ..."
+                                                    class="form-control">
+                                                <span class="input-group-append">
+                                                    <button type="submit" class="btn btn-primary">Send</button>
+                                                </span>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <!-- /.card-footer-->
+                                </div>
+                                <!--/.direct-chat -->
+                                <p id="connection"></p>
+                                <form name="publish">
+                                    <input type="text" name="message">
+                                    <input type="submit" value="Send">
+                                </form>
+
+                                <!-- div with messages -->
+                                <div id="messages"></div>
+
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+        </div>
+
+
+</body>
+<script>
+    let host = window.location.host;
+    let ws;
+    if (window.location.protocol === "http:")
+        ws = new WebSocket("ws://" + host + "/websocket")
+    else
+        ws = new WebSocket("wss://" + host + "/websocket")
+
+    document.forms.publish.onsubmit = function () {
+        let outgoingMessage = this.message.value;
+        let messageElem = document.createElement('div');
+        messageElem.className = "direct-chat-msg right"
+        msgText=document.createElement('div')
+        msgText.className="direct-chat-text"
+        msgText.textContent = outgoingMessage
+        messageElem.appendChild(msgText)
+        document.getElementById('direct-chat').append(messageElem);
+        ws.send(outgoingMessage);
+        return false;
+    };
+    ws.onopen = (e) => {
+        let conElem = document.createElement('div')
+        conElem.className = ('bg-success')
+        conElem.textContent = ('Connected')
+        document.getElementById('connection').append(conElem);
+
+    }
+    ws.onmessage = (event) => {
+        let jsonData;
+        try {
+            jsonData = JSON.parse(event.data)
+        } catch (e) {
+            console.log(e)
+            return
+        }
+        if (jsonData.userlist) {
+            updateUserlist(jsonData.userlist);
+        }
+        let message = new Date().toTimeString() + ":" + event.data;
+        let messageElem = document.createElement('div');
+        
+        messageElem.className = "direct-chat-msg"
+        msgText=document.createElement('div')
+        msgText.className="direct-chat-text"
+        msgText.textContent = message
+        messageElem.appendChild(msgText)
+        document.getElementById('direct-chat').append(messageElem);
+    }
+
+    ws.onerror = function (error) {
+        let conElem = document.createElement('div')
+        conElem.className = ('bg-danger')
+        conElem.textContent = ('Connection has failed')
+        document.getElementById('connection').append(conElem);
+
+    };
+
+    ws.onclose = function (event) {
+        if (event.wasClean) {
+            alert(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+        } else {
+            // e.g. server process killed or network down
+            // event.code is usually 1006 in this case
+            alert('[close] Connection died');
+        }
+    };
+
+    function updateUserlist(userlist) {
+        userlist.forEach(element => {
+            let conElem = document.createElement('div')
+            conElem.className = ('bg-info')
+            conElem.textContent = (element)
+            document.getElementById('users').append(conElem);
+        });
+    }
+</script>
+<%- include('dashboard/scripts') -%>
+
+</html>

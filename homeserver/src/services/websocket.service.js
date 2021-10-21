@@ -1,7 +1,7 @@
 const websocket = require('ws')
 
 const wss1 = new websocket.WebSocketServer({ noServer: true });
-const ROOMS = {};
+let USERS = [];
 
 wss1.getUniqueID = function () {
     function s4() {
@@ -12,7 +12,9 @@ wss1.getUniqueID = function () {
 wss1.on('connection', function connection(ws) {
     let parsed
     ws.id = wss1.getUniqueID();
-    broadcast("Client Connected websocket ID:" + ws.id);
+    broadcast({"newCon":ws.id}); 
+    USERS.push(ws.id)
+    ws.send(JSON.stringify({"userlist":USERS}))
     ws.on('message', function incoming(message) {
         try {
             parsed = JSON.parse(message);
@@ -21,36 +23,31 @@ wss1.on('connection', function connection(ws) {
             ws.send(JSON.stringify({ ok: false }));
             return
         }
-        if (parsed.room) {
-            if (ROOMS[parsed.room]) {
-
-                console.log(ROOMS[parsed.room].users.length)
-                if (!ROOMS[parsed.room].users.includes(ws)) {
-                    ROOMS[parsed.room].users.push(ws)
-                    ws.send(JSON.stringify({ ok: true, rooms: Object.keys(ROOMS) }));
-                }else{
-                    ws.send(JSON.stringify({ ok: false, msg:"You have already joined to this room." }));
-                }
-            } else {
-                ROOMS[parsed.room] = { users: [ws] }
-                ws.send(JSON.stringify({ ok: true, rooms: Object.keys(ROOMS) }));
-            }
-        }
+        
         console.log("parsed json:", parsed);
 
     });
 
     ws.on('close', function close() {
         console.log("Client disconnected websocket ID:", ws.id)
-
+        USERS = arrayRemove(USERS,ws.id)
+        ws.send(JSON.stringify({"userlist":USERS}))
     });
 
 
 });
 
+function arrayRemove(arr, value) {
+ 
+    return arr.filter(function(val){
+        return val != value;
+    });
+  
+ }
+
 function broadcast(message) {
     wss1.clients.forEach(client => {
-        client.send(message);
+        client.send(JSON.stringify(message));
     })
 }
 

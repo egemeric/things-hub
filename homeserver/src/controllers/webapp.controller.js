@@ -8,6 +8,15 @@ const index = (req, res) => {
     res.render('home', { page });
 }
 
+const chat = (req,res) => {
+    let page;
+    page = {
+        name: "websocket"
+    }
+    res.render('websocket',{page})
+}
+
 module.exports = {
-    index
+    index,
+    chat
 }
