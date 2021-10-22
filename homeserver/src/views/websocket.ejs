@@ -9,7 +9,7 @@
     <div class="wrapper">
         <%- include('dashboard/navbar') -%>
 
-    </div>
+    
     <%- include('dashboard/sidebar') -%>
         <div class="content-wrapper">
             <%- include('dashboard/contentHeader',{page}) -%>
@@ -23,25 +23,25 @@
                             <div class="col-lg-6">
 
                                 <!-- DIRECT CHAT -->
-                                <div  class="card direct-chat direct-chat-primary">
+                                <div class="card direct-chat direct-chat-primary">
                                     <div class="card-header">
                                         <h3 class="card-title">Direct Chat With:</h3> <br>
-                                       
+
                                         <span id="chat-with"></span>
                                         <div class="card-tools">
 
                                         </div>
                                     </div>
                                     <!-- /.card-header -->
-                                    <div  class="card-body">
+                                    <div class="card-body">
                                         <div id="direct-chat" class="direct-chat-messages">
-                                            
+
                                         </div>
                                         <!--/.direct-chat-messages-->
                                     </div>
                                     <!-- /.card-body -->
                                     <div class="card-footer">
-                                        <form name="publish" action="#" method="post">
+                                        <form name="publish" action="#">
                                             <div class="input-group">
                                                 <input type="text" name="message" placeholder="Type Message ..."
                                                     class="form-control">
@@ -54,7 +54,24 @@
                                     <!-- /.card-footer-->
                                 </div>
                                 <!--/.direct-chat -->
-                                <p id="connection"></p>
+                                <div class="col-lg-5">
+                                    <form name="setName" action="#" onsubmit="setName()">
+                                        <div class="input-group">
+                                            <input type="text" name="setName" placeholder="Set Your Name">
+                                            <button type="submit" class="btn btn-primary">Set</button>
+                                        </div>
+                                    </form>
+                                    <p id="connection"></p>
+                                </div>
+
+
+                            </div>
+
+                            <div class="col">
+
+                                <video id="localVideo" playsinline autoplay muted></video>
+
+                                <video id="remoteVideo" playsinline autoplay></video>
 
                             </div>
 
@@ -63,9 +80,12 @@
                     </div>
                 </div>
         </div>
+    </div>
 
 
 </body>
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+<script src="/static/webrtc.js" async></script>
 <script>
     let host = window.location.host;
     let ws;
@@ -78,14 +98,22 @@
         let outgoingMessage = this.message.value;
         let messageElem = document.createElement('div');
         messageElem.className = "direct-chat-msg right"
-        msgText=document.createElement('div')
-        msgText.className="direct-chat-text"
+        msgText = document.createElement('div')
+        msgText.className = "direct-chat-text"
         msgText.textContent = outgoingMessage
         messageElem.appendChild(msgText)
         document.getElementById('direct-chat').append(messageElem);
-        ws.send(JSON.stringify({"to":messageTo,"message":outgoingMessage}));
+        ws.send(JSON.stringify({ "to": messageTo, "message": outgoingMessage }));
         return false;
     };
+
+    document.forms.setName.onsubmit = function () {
+        let setName = this.setName.value;
+        console.log(setName);
+        document.getElementById('connection').innerHTML += `<br> Your name:${setName}`
+        ws.send(JSON.stringify({ 'aliasName': setName }))
+        return false
+    }
     ws.onopen = (e) => {
         let conElem = document.createElement('div')
         conElem.className = ('bg-success')
@@ -101,18 +129,18 @@
             console.log(e)
             return
         }
-        if (jsonData.userlist) {
-            updateUserlist(jsonData.userlist);
+        if (jsonData.USERS) {
+            updateUserlist(jsonData.USERS);
         }
-        if(jsonData.yourId){
-            document.getElementById('connection').innerHTML+=`<p>your id:${jsonData.yourId}</p>`
+        if (jsonData.yourId) {
+            document.getElementById('connection').innerHTML += `<p>your id:${jsonData.yourId}</p>`
         }
         let message = new Date().toTimeString() + ":" + event.data;
         let messageElem = document.createElement('div');
-        
+
         messageElem.className = "direct-chat-msg"
-        msgText=document.createElement('div')
-        msgText.className="direct-chat-text"
+        msgText = document.createElement('div')
+        msgText.className = "direct-chat-text"
         msgText.textContent = message
         messageElem.appendChild(msgText)
         document.getElementById('direct-chat').append(messageElem);
@@ -137,13 +165,17 @@
     };
 
     function updateUserlist(userlist) {
+        console.log(userlist);
         document.getElementById('users').innerHTML = ""
-        userlist.forEach(element => {
-            document.getElementById('users').innerHTML += `<p><div class="bg-info p-2" id="${element}"> ${element} <input class="d-block mr-0 ml-auto" style="float: right;" id="${element}" type="button" value="SendMsg" onclick="sendMsg(this.id);" />   </div></p>`;
-        });
+        for (const [key, value] of Object.entries(userlist)) {
+            document.getElementById('users').innerHTML += `<p><div class="bg-info p-2" id="${key}">\
+                                                            ${key}[${value.aliasName}] <input class="d-block mr-0 ml-auto" style="float: right;" id="${key}" type="button" value="SendMsg" onclick="sendMsg(this.id);" />\ 
+                                                            <input class="d-block mr-0 ml-auto" style="float: right;" name="${key}" id="callButton" type="button" value="Call" onclick="start(this.name);" />\ 
+                                                            </div></p>`;
+        }
     }
     var messageTo = "";
-    function sendMsg(userId){
+    function sendMsg(userId) {
         messageTo = userId;
         document.getElementById("chat-with").innerHTML = messageTo;
     }

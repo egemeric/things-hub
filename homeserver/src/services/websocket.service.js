@@ -1,7 +1,7 @@
 const websocket = require('ws')
 
 const wss1 = new websocket.WebSocketServer({ noServer: true });
-let USERS = [];
+let USERS = {};
 
 wss1.getUniqueID = function () {
     function s4() {
@@ -12,9 +12,9 @@ wss1.getUniqueID = function () {
 wss1.on('connection', function connection(ws) {
     let parsed
     ws.id = wss1.getUniqueID();  
-    USERS.push(ws.id)
+    USERS[ws.id]= {aliasName:""}
     ws.send(JSON.stringify({'yourId':ws.id}))
-    broadcast({"userlist":USERS}); 
+    broadcast({USERS}); 
     ws.on('message', function incoming(message) {
         try {
             parsed = JSON.parse(message);
@@ -26,6 +26,10 @@ wss1.on('connection', function connection(ws) {
        if(parsed.message && parsed.to){
            sendMsg(ws.id,parsed.to,parsed.message)
        }
+       if(parsed.aliasName){
+           USERS[ws.id].aliasName=parsed.aliasName
+           broadcast({USERS}); 
+       }
         
         console.log("parsed json:", parsed);
 
@@ -33,8 +37,8 @@ wss1.on('connection', function connection(ws) {
 
     ws.on('close', function close() {
         console.log("Client disconnected websocket ID:", ws.id)
-        USERS = arrayRemove(USERS,ws.id)
-        ws.send(JSON.stringify({"userlist":USERS}))
+        delete USERS[ws.id]
+        broadcast({"userlist":USERS})
     });
 
 
@@ -50,13 +54,6 @@ function sendMsg(from,to,msg){
     })
 }
 
-function arrayRemove(arr, value) {
- 
-    return arr.filter(function(val){
-        return val != value;
-    });
-  
- }
 
 function broadcast(message) {
     wss1.clients.forEach(client => {
