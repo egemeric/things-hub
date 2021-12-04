@@ -1,19 +1,28 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <DHT.h>
+#include <DHT_U.h>
 #define RELAYPIN D5
 #ifndef STASSID
-#define STASSID "EGEMERIC2"
-#define STAPSK  ""
+#define STASSID "SSID"
+#define STAPSK  "pwd"
+#define MQTTBASE "/home/egemeric/"
 #endif
-#define DEVICEID "0x0001"
+#define DEVICEID "0x0002"
+#define MSG_BUFFER_SIZE  (256)
+#define DHTTYPE    DHT11
+#define DHTPIN D3
+DHT_Unified dht(DHTPIN, DHTTYPE);
 const char* ssid     = STASSID;
 const char* password = STAPSK;
+const String mqttBase = MQTTBASE;
 const char* mqtt_server = "10.1.1.144";
+const String subTopics[] = {"/relay/D5", "/relay/D6"};
 
+const char* pubTopics[] = {"/waterlevel", "/temperature"};
 WiFiClient espClient;
 PubSubClient client(espClient);
 unsigned long lastMsg = 0;
-#define MSG_BUFFER_SIZE  (128)
 char msg[MSG_BUFFER_SIZE];
 char tmpTopic[MSG_BUFFER_SIZE];
 char subsTopic[MSG_BUFFER_SIZE];
@@ -21,6 +30,7 @@ int value = 0;
 String clientId = "ESP8266Client-";
 
 void setup() {
+  dht.begin();
   clientId += WiFi.macAddress();
   pinMode(RELAYPIN, OUTPUT);
   digitalWrite(RELAYPIN, HIGH);
@@ -47,26 +57,30 @@ void setup() {
 
 }
 
-
+void subscribeTopics() {
+  char *tmpF = (char*)malloc(MSG_BUFFER_SIZE * sizeof(char));
+  String tmp;
+  for (int i = 0; i < sizeof(subTopics) / sizeof(subTopics[0]); i++) {
+    tmp = mqttBase + clientId + subTopics[i];
+    snprintf (tmpF, MSG_BUFFER_SIZE, "%s", tmp.c_str() );
+    Serial.printf("Subcribed:%s\n", tmpF);
+    client.subscribe(tmpF);
+    client.publish((mqttBase + clientId + "/subsribed").c_str() , subTopics[i].c_str());
+    delay(100);
+  }
+  delete tmpF;
+}
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
-
     Serial.println(clientId);
-    // Attempt to connect
     if (client.connect(clientId.c_str())) {
       Serial.println("connected");
-      // ... and resubscribe
-      snprintf (subsTopic, MSG_BUFFER_SIZE, "/home/egemeric/%s/light", clientId.c_str() );
-      client.subscribe(subsTopic);
-      Serial.printf("\nsubscribed:%s\n", subsTopic);
-      snprintf (msg, MSG_BUFFER_SIZE, "%s", clientId.c_str());
-      client.publish("/home/egemeric/register/device", msg);
-      snprintf (tmpTopic, MSG_BUFFER_SIZE, "/home/egemeric/heartbeat/%s", clientId.c_str() ); //set heartbeat topic
+      client.publish("/home/egemeric/register/device", clientId.c_str());
       delay(100);
-
+      subscribeTopics();
+      delay(100);
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -95,8 +109,33 @@ void handleRelay(byte *cmd) {
 
   free(tmp);
 }
+int BoolPinController(byte *payload, int pin) {
+  pinMode(pin, OUTPUT);
+  if ((char)payload[0] == '1') {
+    digitalWrite(pin, HIGH);
+    return (1);
+  }
+  else if ((char)payload[0] == '0') {
+    digitalWrite(pin, LOW);
+    return (0);
+  } else {
+    Serial.printf("BoolPinController could not understand only give '0' and '1':%c\n", (char)payload[0]);
+    return -1;
+  }
+}
 
+void msgRouter(char *topic, byte *payload ) {
+  String _D5 =  mqttBase + clientId + "/relay/D5";
+  String _D6 =  mqttBase + clientId + "/relay/D6";
+  if (strcmp(topic, _D5.c_str()) == 0) {
+    BoolPinController(payload, D5);
+  } else if ((strcmp(topic, _D6.c_str()) == 0)) {
+    BoolPinController(payload, D5);
+  } else {
+    Serial.printf("msg from topic cannot be routed:%s\n", topic);
+  }
 
+}
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
@@ -105,24 +144,49 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
-  if (strcmp(topic, subsTopic) == 0) {
-    handleRelay(payload);
+  if (length > 0) {
+    Serial.println("msgRouter()");
+    msgRouter(topic, payload);
   }
 }
 
+void publishData(float data, String datatype) {
+  char databuffer[20];
+  sprintf(databuffer, "%f", data);
+  client.publish((mqttBase + clientId + "/data/" + datatype).c_str() , databuffer );
+}
+
+unsigned long lastHBMsg = 0;
+void sendHeartbeat() {
+  unsigned long now = millis();
+  if (now - lastHBMsg > 1000 * 30) {
+    Serial.println("heartbeat is");
+    client.publish("/home/egemeric/heartbeat", clientId.c_str() );
+    lastHBMsg = now;
+  }
+}
 
 void loop() {
   if (!client.connected()) {
     reconnect();
-
   }
   client.loop();
+  sendHeartbeat();
   unsigned long now = millis();
-  if (now - lastMsg > 1000 * 60) {
+  if (now - lastMsg > 1000 * 10) {
     lastMsg = now;
-    Serial.println("heartbeat is send to:");
-    Serial.print(tmpTopic);
-    client.publish(tmpTopic, "ok");
+    sensors_event_t event;
+    dht.temperature().getEvent(&event);
+    if (isnan(event.temperature)) {
+      Serial.println(F("Error reading temperature!"));
+    }
+    publishData(event.temperature, "temp");
+    dht.humidity().getEvent(&event);
+
+    if (isnan(event.relative_humidity)) {
+      Serial.println(F("Error reading humidity!"));
+    }
+    publishData(event.relative_humidity, "humidity");
 
   }
 }
