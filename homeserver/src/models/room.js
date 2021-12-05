@@ -9,19 +9,13 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Room.belongsTo(models.Home, { foreignKey: "homeId", as: "home" });
+      this.belongsTo(models.Home);
     }
   }
   Room.init(
     {
       roomName: { type: DataTypes.STRING, allowNull: false },
-      homeId: DataTypes.UUID,
       users: DataTypes.JSON,
-      roomId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        defaultValue: DataTypes.UUIDV4,
-      },
     },
     {
       sequelize,

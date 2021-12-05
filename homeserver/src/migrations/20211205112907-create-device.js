@@ -11,6 +11,7 @@ module.exports = {
       deviceName: {
         type: Sequelize.STRING,
         allowNull: false,
+        unique:true
       },
       homeId: {
         type: Sequelize.UUID,

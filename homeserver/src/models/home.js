@@ -9,16 +9,13 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      this.hasMany(models.Room);
+      this.hasMany(models.Device);
     }
   }
   Home.init(
     {
       aliasName: { type: DataTypes.STRING, unique: true },
-      homeId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        defaultValue: DataTypes.UUIDV4,
-      },
       phone: DataTypes.STRING,
       adress: DataTypes.STRING,
       ipAdress: DataTypes.STRING,

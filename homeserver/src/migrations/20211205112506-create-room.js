@@ -15,6 +15,12 @@ module.exports = {
       homeId: {
         type: Sequelize.UUID,
         allowNull: false,
+        references:{
+          model:{
+            tableName:'Homes',
+          },
+          key:'homeId'
+        }
       },
       users: {
         type: Sequelize.JSON,

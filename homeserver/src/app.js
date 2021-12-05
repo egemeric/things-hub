@@ -6,12 +6,13 @@ const http = require('http');
 const mqtt = require('./services/mqtt.service')
 const routes = require("./routes/index.route")
 const websocket = require('./services/websocket.service')
+const setDb =  require('./config/initialDatabase');
 const url = require("url")
 var path = require('path');
 const app = express()
 const PORT = 9000
 const HOST = '0.0.0.0';
-
+setDb();
 
 mqtt.setMqtt();
 

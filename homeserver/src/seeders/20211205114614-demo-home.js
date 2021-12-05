@@ -21,22 +21,12 @@ module.exports = {
         phone: "02122345643",
         adress: "ankara/cankaya",
         ipAdress: "127.0.0.1",
-        homeId: uuid,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     ]);
 
-    await queryInterface.bulkInsert("Rooms", [
-      {
-        roomName: "egemeric",
-        homeId: uuid,
-        roomId: randomUUID(),
-        users: JSON.stringify({users:['egemeric','sevil']}),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]);
+   
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -44,7 +34,9 @@ module.exports = {
      * Add commands to revert seed here.
      *
      * Example:
-      await queryInterface.bulkDelete('People', null, {});
+    await queryInterface.bulkDelete('People', null, {});
      */
+    await queryInterface.bulkDelete('Homes', null, {});
+    await queryInterface.bulkDelete('Rooms', null, {});
   },
 };

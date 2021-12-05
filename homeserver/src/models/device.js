@@ -9,20 +9,14 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Device.belongsTo(models.Room, { foreignKey: "roomId", as: "room" });
-      Device.belongsTo(models.Home, { foreignKey: "homeId", as: "home" });
+      Device.belongsTo(models.Room,{allowNull:true});
+      Device.belongsTo(models.Home,{allowNull:false});
     }
   }
   Device.init(
     {
-      deviceName: { type: DataTypes.STRING, allowNull: false },
-      homeId: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        allowNull: false,
-      },
-      roomId: DataTypes.UUID,
-      deviceId: DataTypes.UUID,
+
+      deviceName: { type: DataTypes.STRING, allowNull: false , unique:true},
       deviceEndpoints: DataTypes.JSON,
       users: DataTypes.JSON,
     },
