@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 #include <DHT.h>
 #include <DHT_U.h>
 #define RELAYPIN D5
@@ -76,8 +77,19 @@ void reconnect() {
     Serial.print("Attempting MQTT connection...");
     Serial.println(clientId);
     if (client.connect(clientId.c_str())) {
+      char registerJson[400];
       Serial.println("connected");
-      client.publish("/home/egemeric/register/device", clientId.c_str());
+      StaticJsonDocument<400> doc;
+      doc["deviceName"] = clientId;
+      JsonArray data = doc.createNestedArray("deviceEndpoints");
+      JsonObject alias = data.createNestedObject();
+      alias["/relay/D5"] = "Servo";
+      alias["/relay/D6"] = "Relay";
+      JsonArray publishPoints = doc.createNestedArray("publishPoints");
+      publishPoints.add("/data/waterlevel");
+      publishPoints.add("/data/temperature");
+      serializeJson(doc, registerJson);
+      client.publish("/home/egemeric/register/device", registerJson);
       delay(100);
       subscribeTopics();
       delay(100);
@@ -166,6 +178,16 @@ void sendHeartbeat() {
   }
 }
 
+float analogData() {
+  int returnVal;
+  int val = analogRead(A0);
+  if (val < 300)
+    val = 300;
+  returnVal = map(val, 300, 600, 0, 100);
+  Serial.printf("Analog Data Raw:%d Mapped:%d\n", val, returnVal);
+  return (float)returnVal;
+}
+
 void loop() {
   if (!client.connected()) {
     reconnect();
@@ -173,7 +195,7 @@ void loop() {
   client.loop();
   sendHeartbeat();
   unsigned long now = millis();
-  if (now - lastMsg > 1000 * 10) {
+  if (now - lastMsg > 1000 * 2) {
     lastMsg = now;
     sensors_event_t event;
     dht.temperature().getEvent(&event);
@@ -187,6 +209,7 @@ void loop() {
       Serial.println(F("Error reading humidity!"));
     }
     publishData(event.relative_humidity, "humidity");
+    publishData(analogData(), "water");
 
   }
 }
