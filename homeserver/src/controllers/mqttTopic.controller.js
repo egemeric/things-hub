@@ -3,8 +3,13 @@ const db = require("../models");
 let subscribeds;
 const mqttController = {
   registerDevice: async (home, room, msg) => {
+    try{
+      msg = JSON.parse(msg);
+    }catch(e){
+      console.log(e);
+    }
     console.log(
-      `New Device Registration:\n[name:${msg}, toRoom:${room}, home:${home}]`
+      `New Device Registration:\n[obj:${msg}, toRoom:${room}, home:${home}]`
     );
     db["Home"]
       .findOne({ where: { aliasName: home } })
@@ -14,9 +19,11 @@ const mqttController = {
           .then((aroom) => {
             db["Device"]
               .create({
-                deviceName: msg,
+                deviceName: msg?.deviceName,
                 RoomId: aroom.id,
                 HomeId: ahome.id,
+                deviceEndpoints: JSON.stringify(msg.deviceEndpoints),
+                publishPoints:JSON.stringify(msg?.publishPoints)
               })
               .catch((error) => console.log(error));
           })

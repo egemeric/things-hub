@@ -16,27 +16,46 @@
                 <div class="content">
                     <div class="container-fluid">
                         <div class="row">
-                            <% for(var i=0; i < page.devices.length; i++) { %>
-                                <div class="col-lg-6">
+                            <% for(var i=0; i < page.Home.length; i++) { %>
+                                <div class="col-lg">
                                     <div class="card">
-                                        <div class="card-header bg-info"> 
-                                            <strong><h5 class="m-0">Device: <%= page.devices[i]%></h5></strong>
+                                        <div class="card-header bg-info">
+                                            <strong>
+                                                <h5 class="m-0">Room: <%= page.Home[i].room.roomName%>
+                                                </h5>
+                                            </strong>
                                         </div>
+
                                         <div class="card-body">
-                                          
-                                            <p class="card-text">
-                                                <%= page.devices[i]%>
-                                            </p>
-                                            <li>
-                                                <ol> Light
-                                                <button class="btn bg-success p-2" onclick="lightRequest('<%= page.devices[i]%>',true);">
-                                                    open
-                                                </button>
-                                                <button class="btn bg-danger p-2" onclick="lightRequest('<%= page.devices[i]%>',false);">
-                                                    close
-                                                </button>
-                                                </ol>
-                                            </li>
+                                            <div class="card-text">
+                                                Room Devices
+                                            </div>
+                                            <div class="row">
+                                                <% for(var j=0; j < page.Home[i].room.devices.length; j++){ %>
+                                                    <div class="col-lg-5">
+                                                        <div class="card">
+                                                            <div class="card-header bg-dark text-white">
+
+                                                                <h6>
+                                                                    <%=page.Home[i].room.devices[j].deviceName %>
+                                                                </h6>
+
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <ul>
+                                                                   <%  let elem = JSON.parse(page.Home[i].room.devices[j].deviceEndpoints)[0]; Object.keys(elem).forEach(function(key){ %>
+                                                                    <li>
+                                                                        <%-key %>  = <%- elem[key] %> 
+                                                                       
+                                                                    </li>
+                                                                   <% }) %>
+
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <% } %>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -50,29 +69,29 @@
 
 </body>
 <script>
-    async function lightRequest(devid,open) {
-    let rootPath = window.location.origin;
-    if(open)
-        rootPath += "/api/control/open?devid="+devid;
-    else
-        rootPath += "/api/control/close?devid="+devid;
+    async function lightRequest(devid, open) {
+        let rootPath = window.location.origin;
+        if (open)
+            rootPath += "/api/control/open?devid=" + devid;
+        else
+            rootPath += "/api/control/close?devid=" + devid;
 
-    console.log("RequestUrl:",rootPath);
-	const fetchOptions = {
-		method: "GET",
-		credentials: "same-origin",
-		
-	};
-	const response = await fetch(rootPath, fetchOptions);
-	
-    if (!response.ok) {
-		const errorMessage = await response.text();
-		throw new Error(errorMessage);
-	}
+        console.log("RequestUrl:", rootPath);
+        const fetchOptions = {
+            method: "GET",
+            credentials: "same-origin",
 
-    console.log("response:",response);
-	
-}
+        };
+        const response = await fetch(rootPath, fetchOptions);
+
+        if (!response.ok) {
+            const errorMessage = await response.text();
+            throw new Error(errorMessage);
+        }
+
+        console.log("response:", response);
+
+    }
 </script>
 <%- include('dashboard/scripts') -%>
 

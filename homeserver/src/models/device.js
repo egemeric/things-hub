@@ -9,15 +9,15 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Device.belongsTo(models.Room,{allowNull:true});
-      Device.belongsTo(models.Home,{allowNull:false});
+      Device.belongsTo(models.Room, { allowNull: true });
+      Device.belongsTo(models.Home, { allowNull: false });
     }
   }
   Device.init(
     {
-
-      deviceName: { type: DataTypes.STRING, allowNull: false , unique:true},
+      deviceName: { type: DataTypes.STRING, allowNull: false, unique: true },
       deviceEndpoints: DataTypes.JSON,
+      publishPoints: DataTypes.JSON,
       users: DataTypes.JSON,
     },
     {
