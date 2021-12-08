@@ -71,7 +71,7 @@ const mqttController = {
             date: new Date(),
             dataType: dataType,
             data: value,
-            DeviceId: device.Id,
+            DeviceId: deviceId,
           })
           .catch((e) => console.log(e));
       })
