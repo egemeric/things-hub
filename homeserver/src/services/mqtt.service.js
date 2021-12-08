@@ -1,5 +1,5 @@
 const mqtt = require("mqtt");
-const mqttControllerRouter = require('../controllers/mqttTopic.controller');
+const mqttControllerRouter = require("../controllers/mqttTopic.controller");
 const mqtt_host = "127.0.0.1";
 const mqtt_port = "1883";
 const mqtt_clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
@@ -22,22 +22,19 @@ function setMqtt() {
         let tmpTopic;
         for (let room in rooms) {
           tmpTopic = `/${home[0].aliasName}/${rooms[room].roomName}/register/device`;
-          console.log('Mqqt Service Subscribed:', tmpTopic);
-          mqtt_client.subscribe(
-            tmpTopic,
-            function (err,granted) {
-              if (err) {
-                console.log(err);
-              }else{
-                mqtt_client_topics.push(granted[0].topic);
-              }
-            }
-          );
+          mqtt_client.subscribe([tmpTopic], subscribeErr);
         }
       })
       .catch((error) => console.log(error));
   });
 
+  const subscribeErr = function (err, granted) {
+    if (err) {
+      console.log(err);
+    } else {
+      mqtt_client_topics.push(granted[0].topic);
+    }
+  };
   mqtt_client.on("message", async function (topic, message) {
     // message is Buffer
     const msg = message.toString();
@@ -45,7 +42,7 @@ function setMqtt() {
       DEVICES.add(msg);
       console.log(DEVICES);
     }
-    mqttControllerRouter(message,topic);
+    mqttControllerRouter(message, topic, mqtt_client);
   });
 }
 module.exports = {

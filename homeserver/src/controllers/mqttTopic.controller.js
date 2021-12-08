@@ -3,9 +3,9 @@ const db = require("../models");
 let subscribeds;
 const mqttController = {
   registerDevice: async (home, room, msg) => {
-    try{
+    try {
       msg = JSON.parse(msg);
-    }catch(e){
+    } catch (e) {
       console.log(e);
     }
     console.log(
@@ -23,7 +23,7 @@ const mqttController = {
                 RoomId: aroom.id,
                 HomeId: ahome.id,
                 deviceEndpoints: JSON.stringify(msg.deviceEndpoints),
-                publishPoints:JSON.stringify(msg?.publishPoints)
+                publishPoints: JSON.stringify(msg?.publishPoints),
               })
               .catch((error) => console.log(error));
           })
@@ -31,9 +31,55 @@ const mqttController = {
       })
       .catch((error) => console.log(error));
   },
+
+  setdeviceEndPoints: (mqtt_client) => {
+    db["Home"]
+      .findAll()
+      .then(async (home) => {
+        let rooms = await home[0].getRooms();
+        for (let room in rooms) {
+          try {
+            let roomDevice = await rooms[room].getDevices({
+              attributes: ["publishPoints", "deviceEndpoints"],
+            });
+            let roomDeviceDataUrl = JSON.parse(
+              roomDevice.map((arr) => arr.dataValues.publishPoints)[0]
+            );
+            roomDevice = JSON.parse(
+              roomDevice.map((arr) => arr.dataValues.deviceEndpoints)[0]
+            )[0];
+            roomDeviceDataUrl = roomDeviceDataUrl.map(
+              (arr) => `/${home[0].aliasName}/${rooms[room].roomName}/+` + arr
+            );
+            await mqtt_client.subscribe([...roomDeviceDataUrl]);
+          } catch (e) {
+            console.log(e);
+          }
+        }
+      })
+      .catch((error) => console.log(error));
+  },
+
+  dataLogger: async (deviceName, dataType, value) => {
+    await db["Device"]
+      .findOne({ where: { deviceName } })
+      .then((device) => {
+        let deviceId = device.id;
+        console.log("Data logger:", deviceId);
+        db["DeviceData"]
+          .create({
+            date: new Date(),
+            dataType: dataType,
+            data: value,
+            DeviceId: device.Id,
+          })
+          .catch((e) => console.log(e));
+      })
+      .catch((e) => console.log(e));
+  },
 };
 
-const topicRouter = (msg, topic) => {
+const topicRouter = (msg, topic, mqtt_client) => {
   let parsedTopic = topic.split("/");
   console.log(parsedTopic);
   let homeAlias = parsedTopic[1];
@@ -41,8 +87,14 @@ const topicRouter = (msg, topic) => {
   console.log(msg, topic);
   if (topic.endsWith("/register/device")) {
     mqttController.registerDevice(homeAlias, roomName, msg.toString());
+    mqttController.setdeviceEndPoints(mqtt_client);
+  } else if (parsedTopic.includes("data")) {
+    let deviceName = parsedTopic[3];
+    let dataType = parsedTopic.pop();
+    mqttController.dataLogger(deviceName, dataType, msg.toString());
+    console.log("Data Topic");
   } else {
-    console.warn("topic cannot be routed!");
+    console.error("topic connot be routed:", topic);
   }
 };
 

@@ -5,8 +5,8 @@
 #include <DHT_U.h>
 #define RELAYPIN D5
 #ifndef STASSID
-#define STASSID "SSID"
-#define STAPSK  "pwd"
+#define STASSID "   "
+#define STAPSK  "   "
 #define MQTTBASE "/home/egemeric/"
 #endif
 #define DEVICEID "0x0002"
@@ -86,8 +86,9 @@ void reconnect() {
       alias["/relay/D5"] = "Servo";
       alias["/relay/D6"] = "Relay";
       JsonArray publishPoints = doc.createNestedArray("publishPoints");
-      publishPoints.add("/data/waterlevel");
-      publishPoints.add("/data/temperature");
+      publishPoints.add("/data/water");
+      publishPoints.add("/data/temp");
+       publishPoints.add("/data/humidity");
       serializeJson(doc, registerJson);
       client.publish("/home/egemeric/register/device", registerJson);
       delay(100);
