@@ -3,10 +3,11 @@
 #include <ArduinoJson.h>
 #include <DHT.h>
 #include <DHT_U.h>
+#define LED LED_BUILTIN 
 #define RELAYPIN D5
 #ifndef STASSID
-#define STASSID "   "
-#define STAPSK  "   "
+#define STASSID ""
+#define STAPSK  ""
 #define MQTTBASE "/home/egemeric/"
 #endif
 #define DEVICEID "0x0002"
@@ -19,6 +20,7 @@ const char* password = STAPSK;
 const String mqttBase = MQTTBASE;
 const char* mqtt_server = "10.1.1.144";
 const String subTopics[] = {"/relay/D5", "/relay/D6"};
+uint8_t ledState = 1; 
 
 const char* pubTopics[] = {"/waterlevel", "/temperature"};
 WiFiClient espClient;
@@ -31,6 +33,7 @@ int value = 0;
 String clientId = "ESP8266Client-";
 
 void setup() {
+  pinMode(LED, OUTPUT);
   dht.begin();
   clientId += WiFi.macAddress();
   pinMode(RELAYPIN, OUTPUT);
@@ -150,6 +153,7 @@ void msgRouter(char *topic, byte *payload ) {
 
 }
 void callback(char* topic, byte* payload, unsigned int length) {
+  digitalWrite(LED, LOW);
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
@@ -190,13 +194,16 @@ float analogData() {
 }
 
 void loop() {
+  digitalWrite(LED, HIGH);
   if (!client.connected()) {
+    digitalWrite(LED, LOW);
     reconnect();
   }
   client.loop();
   sendHeartbeat();
   unsigned long now = millis();
   if (now - lastMsg > 1000 * 2) {
+    digitalWrite(LED, LOW);
     lastMsg = now;
     sensors_event_t event;
     dht.temperature().getEvent(&event);
