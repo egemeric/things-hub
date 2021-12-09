@@ -48,10 +48,16 @@ const mqttController = {
             roomDevice = JSON.parse(
               roomDevice.map((arr) => arr.dataValues.deviceEndpoints)[0]
             )[0];
+
+            roomDevice = Object.keys(roomDevice).map(
+              (arr) => `/${home[0].aliasName}/${rooms[room].roomName}/+` + arr
+            );
+            console.log(roomDevice);
             roomDeviceDataUrl = roomDeviceDataUrl.map(
               (arr) => `/${home[0].aliasName}/${rooms[room].roomName}/+` + arr
             );
             await mqtt_client.subscribe([...roomDeviceDataUrl]);
+            await mqtt_client.subscribe([...roomDevice]);
           } catch (e) {
             console.log(e);
           }
@@ -77,6 +83,18 @@ const mqttController = {
       })
       .catch((e) => console.log(e));
   },
+
+  relayEventLogger: async (deviceName, eventEndpoint, value) => {
+    await db["Device"].findOne({ where: { deviceName } }).then((device) => {
+      let DeviceId = device.id;
+      db["DeviceEvent"].create({
+        date: new Date(),
+        endPoint: eventEndpoint,
+        eventData: value,
+        DeviceId
+      });
+    });
+  },
 };
 
 const topicRouter = (msg, topic, mqtt_client) => {
@@ -93,9 +111,14 @@ const topicRouter = (msg, topic, mqtt_client) => {
     let dataType = parsedTopic.pop();
     mqttController.dataLogger(deviceName, dataType, msg.toString());
     console.log("Data Topic");
+  } else if (parsedTopic.includes("relay")) {
+    let deviceName = parsedTopic[3];
+    let Pin = parsedTopic.pop();
+    Pin = "/relay/" + Pin;
+    mqttController.relayEventLogger(deviceName,Pin,msg.toString())
   } else {
     console.error("topic connot be routed:", topic);
   }
 };
 
-module.exports = topicRouter;
+module.exports = { topicRouter, mqttController };
