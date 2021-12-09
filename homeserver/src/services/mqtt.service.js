@@ -1,5 +1,5 @@
 const mqtt = require("mqtt");
-const mqttControllerRouter = require("../controllers/mqttTopic.controller");
+const {topicRouter,mqttController} = require("../controllers/mqttTopic.controller");
 const mqtt_host = "127.0.0.1";
 const mqtt_port = "1883";
 const mqtt_clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
@@ -42,9 +42,10 @@ function setMqtt() {
       DEVICES.add(msg);
       console.log(DEVICES);
     }
-    mqttControllerRouter(message, topic, mqtt_client);
+    topicRouter(message, topic, mqtt_client);
   });
 }
+mqttController.setdeviceEndPoints(mqtt_client)
 module.exports = {
   mqtt_client,
   mqtt_client_topics,
