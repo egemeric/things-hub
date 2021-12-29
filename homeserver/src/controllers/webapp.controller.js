@@ -20,6 +20,7 @@ const index = async (req, res) => {
   console.log(HomeData);
   page = {
     name: "Home Name:" + home.aliasName,
+    homeName: home.aliasName,
     Home: HomeData,
   };
   res.render("home", { page });
