@@ -17,6 +17,12 @@ To run app enter:
 ```
 docker pull egemeric/mqttapp
 docker run -it  -p '9000:9000' egemeric/mqttapp
+
+# Or build by Own
+docker build . -t <yourtag>
+docker run -it  -p '9000:9000' <yourtag>
+
+
 ```
 
 Without Docker:  
