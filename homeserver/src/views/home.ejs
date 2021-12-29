@@ -2,6 +2,67 @@
 <html lang="en">
 
 <head>
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked+.slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+    </style>
     <%- include('dashboard/header') -%>
 </head>
 
@@ -42,13 +103,39 @@
 
                                                             </div>
                                                             <div class="card-body">
-                                                                <ul>
-                                                                   <%  let elem = JSON.parse(page.Home[i].room.devices[j].deviceEndpoints)[0]; Object.keys(elem).forEach(function(key){ %>
-                                                                    <li>
-                                                                        <%-key %>  = <%- elem[key] %> 
-                                                                       
-                                                                    </li>
-                                                                   <% }) %>
+                                                                <div class="row">
+
+
+                                                                    <% let
+                                                                        elem=JSON.parse(page.Home[i].room.devices[j].deviceEndpoints)[0];
+                                                                        Object.keys(elem).forEach(function(key){ %>
+                                                                        <div class="col">
+                                                                            Control <%- elem[key] %> <br>
+                                                                                Mqtt End point: <code><%-key %></code>
+                                                                                <br>
+                                                                                <% if(key.startsWith('/servo')){ %>
+                                                                                    <label for="ll"
+                                                                                        class="form-label">Servo
+                                                                                        degree: </label><span
+                                                                                        id="slider"></span>
+                                                                                    <input type="range"
+                                                                                        name="<%= '/'+page.homeName+'/'+page.Home[i].room.roomName+'/'+ page.Home[i].room.devices[j].deviceName+key%>"
+                                                                                        class="form-range" min="0"
+                                                                                        max="180" id="range">
+
+                                                                                    <%}else{%>
+                                                                                        <label class="switch">
+                                                                                            <input type="checkbox">
+                                                                                            <span
+                                                                                                class="slider round"></span>
+                                                                                        </label>
+                                                                                        <%}%>
+
+
+                                                                        </div>
+                                                                        <% }) %>
+
+                                                                </div>
 
                                                                 </ul>
                                                             </div>
@@ -69,20 +156,29 @@
 
 </body>
 <script>
-    async function lightRequest(devid, open) {
-        let rootPath = window.location.origin;
-        if (open)
-            rootPath += "/api/control/open?devid=" + devid;
-        else
-            rootPath += "/api/control/close?devid=" + devid;
+    var slider = document.getElementById("range");
+    var output = document.getElementById("slider");
+    output.innerHTML = slider.value;
+    slider.oninput = function () {
+        output.innerHTML = '<br>' + '<code>' + this.name + '</code> = ' + this.value;
+        let body = { topic: this.name, msg: this.value };
+        console.log(body);
+        postRequest("/api/publish", body);
+    }
+    async function postRequest(endpoint, body) {
 
-        console.log("RequestUrl:", rootPath);
+        console.log("RequestUrl:", endpoint);
         const fetchOptions = {
-            method: "GET",
+            method: "post",
             credentials: "same-origin",
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
 
         };
-        const response = await fetch(rootPath, fetchOptions);
+        const response = await fetch(location.protocol + '//' + location.host + endpoint, fetchOptions);
 
         if (!response.ok) {
             const errorMessage = await response.text();
@@ -92,6 +188,8 @@
         console.log("response:", response);
 
     }
+
+
 </script>
 <%- include('dashboard/scripts') -%>
 
