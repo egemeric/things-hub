@@ -20,4 +20,4 @@ RUN sh ./makessl.sh
 RUN chmod 777 *
 WORKDIR /usr/src/server
 ENV PATH /usr/sbin:$PATH
-ENTRYPOINT ["/bin/sh"]
+ENTRYPOINT npm start
