@@ -35,7 +35,7 @@ int value = 0;
 String clientId = "ESP8266Client-";
 
 void setup() {
-  servo_1.attach(2);  //D3
+  servo_1.attach(2,400,2600);  //D3
   pinMode(LED, OUTPUT);
   delay(2000);
   servo_1.write(0);
