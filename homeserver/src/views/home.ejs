@@ -78,6 +78,7 @@
                     <div class="container-fluid">
 
                         <div class="row">
+
                             <% for(var i=0; i < page.Home.length; i++) { %>
                                 <div class="col-lg">
                                     <div class="card">
@@ -125,21 +126,54 @@
                                                                                         step="20" max="180" id="range">
 
                                                                                     <%}else{%>
-                                                                                        <label class="switch">
-                                                                                            <input type="checkbox">
-                                                                                            <span
-                                                                                                class="slider round"></span>
-                                                                                        </label>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-primary"
+                                                                                            onclick="boolCmd('<%= '/'+page.homeName+'/'+page.Home[i].room.roomName+'/'+ page.Home[i].room.devices[j].deviceName+key%>')">Trigger</button>
+
+
+
                                                                                         <%}%>
 
 
                                                                         </div>
                                                                         <% }) %>
-                                                                            <div
+                                                                            <div class="col"
                                                                                 id="charts-<%=page.Home[i].room.devices[j].deviceName%>">
-                                                                                <canvas id="myChart"
-                                                                                    deviceName="<%=page.Home[i].room.devices[j].deviceName%>"></canvas>
+                                                                                <button type="button"
+                                                                                    class="btn btn-info btn-lg"
+                                                                                    data-toggle="modal"
+                                                                                    data-target="#myModal">Open
+                                                                                    Data Graphs</button>
+
+                                                                                <!-- Modal -->
+                                                                                <div class="modal fade" id="myModal"
+                                                                                    role="dialog">
+                                                                                    <div class="modal-dialog">
+
+                                                                                        <!-- Modal content-->
+                                                                                        <div class="modal-content">
+                                                                                            <div class="modal-header">
+                                                                                                <button type="button"
+                                                                                                    class="close"
+                                                                                                    data-dismiss="modal">&times;</button>
+                                                                                            </div>
+                                                                                            <div class="modal-body">
+                                                                                                <p>Some text in the
+                                                                                                    modal.</p>
+                                                                                                <canvas id="myChart"
+                                                                                                    deviceName="<%=page.Home[i].room.devices[j].deviceName%>"></canvas>
+                                                                                            </div>
+                                                                                            <div class="modal-footer">
+                                                                                                <button type="button"
+                                                                                                    class="btn btn-default"
+                                                                                                    data-dismiss="modal">Close</button>
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                    </div>
+                                                                                </div>
                                                                             </div>
+
 
                                                                 </div>
                                                             </div>
@@ -158,77 +192,127 @@
 
 
 </body>
+<%- include('dashboard/scripts') -%>
 
-<script>
-    var slider = document.getElementById("range");
-    var output = document.getElementById("slider");
-    output.innerHTML = slider.value;
-    slider.oninput = function () {
-        output.innerHTML = '<br>' + '<code>' + this.name + '</code> = ' + this.value;
-        let body = { topic: this.name, msg: this.value };
-        console.log(body);
-        httpRequest("/api/publish", 'post', body);
-    }
-    async function httpRequest(endpoint, type, body = null) {
+    <script>
+        var slider = document.getElementsByClassName("form-range");
+        console.log(slider);
+        for (i = 0; i < slider.length; i++) {
+            slider[i].oninput = function () {
 
-        console.log("RequestUrl:", endpoint);
-        const fetchOptions = {
-            method: type,
-            credentials: "same-origin",
-            headers: {
-                'Accept': 'application/json, text/plain, */*',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-
-        };
-        if (body === null) {
-            delete fetchOptions.body;
-        }
-        const response = await fetch(location.protocol + '//' + location.host + endpoint, fetchOptions);
-
-        if (!response.ok) {
-            const errorMessage = await response.text();
-            throw new Error(errorMessage);
-        }
-
-        console.log("response:", response);
-        return (response.text());
-
-    }
-
-
-</script>
-
-<script>
-    var ctx = document.getElementById("myChart").getContext('2d');
-    var device = document.getElementById("myChart");
-    window.onload = async () => {
-        let datas = JSON.parse( await httpRequest("/api/data?deviceName=" + device.getAttribute("deviceName"), 'get'));
-        let types = Object.keys(datas);
-        console.log(types);
-    }
-
-    const myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-            datasets: [{
-                label: '# of Votes',
-                data: [12, 19, 3, 5, 2, 3],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
+                let body = { topic: this.name, msg: this.value };
+                console.log(body);
+                httpRequest("/api/publish", 'post', body);
+                var output = slider[i].getElementById("slider");
+                output.innerHTML = slider.value;
+                output.innerHTML = '<br>' + '<code>' + this.name + '</code> = ' + this.value;
             }
         }
-    });
 
-</script>
-<%- include('dashboard/scripts') -%>
+
+        async function httpRequest(endpoint, type, body = null) {
+
+            console.log("RequestUrl:", endpoint);
+            const fetchOptions = {
+                method: type,
+                credentials: "same-origin",
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+
+            };
+            if (body === null) {
+                delete fetchOptions.body;
+            }
+            const response = await fetch(location.protocol + '//' + location.host + endpoint, fetchOptions);
+
+            if (!response.ok) {
+                const errorMessage = await response.text();
+                throw new Error(errorMessage);
+            }
+
+            console.log("response:", response);
+            return (response.text());
+
+        }
+
+
+    </script>
+
+    <script>
+        var ctx = document.getElementById("myChart").getContext('2d');
+        var device = document.getElementById("myChart");
+        window.onload = async () => {
+            let datas = JSON.parse(await httpRequest("/api/data?deviceName=" + device.getAttribute("deviceName"), 'get'));
+            let types = Object.keys(datas);
+            console.log(types);
+        }
+
+        const myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+                datasets: [{
+                    label: '# of Votes',
+                    data: [12, 19, 3, 5, 2, 3],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+    </script>
+    <script>
+        $('#exampleModal').on('show.bs.modal', function (event) {
+
+            var button = $(event.relatedTarget);
+            var modal = $(this);
+            var canvas = modal.find('.modal-body canvas');
+
+            // Chart initialisieren
+            var ctx = canvas[0].getContext("2d");
+            var chart = new Chart(ctx).Line({
+                labels: ["January", "February", "March", "April", "May", "June", "July"],
+                datasets: [
+                    {
+                        fillColor: "rgba(190,144,212,0.2)",
+                        strokeColor: "rgba(190,144,212,1)",
+                        pointColor: "rgba(190,144,212,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(220,220,220,1)",
+                        data: [65, 59, 80, 81, 56, 55, 40]
+                    },
+                    {
+                        fillColor: "rgba(151,187,205,0.2)",
+                        strokeColor: "rgba(151,187,205,1)",
+                        pointColor: "rgba(151,187,205,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(151,187,205,1)",
+                        data: [65, 59, 80, 81, 56, 55, 40]
+                    }
+                ]
+            }, {});
+        });
+
+    </script>
+
+    <script>
+        async function boolCmd(topic) {
+            console.log(topic);
+            await httpRequest("/api/publish", 'post', { topic, msg: "2" });
+        }
+
+    </script>
+
 
 </html>
