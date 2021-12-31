@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <Servo.h>
 #include <PubSubClient.h>
+
 #include <ArduinoJson.h>
 #include <DHT.h>
 #include <DHT_U.h>
@@ -20,8 +21,10 @@ const char* ssid     = STASSID;
 const char* password = STAPSK;
 const String mqttBase = MQTTBASE;
 const char* mqtt_server = "10.1.1.144";
-const String subTopics[] = {"/relay/D5", "/relay/D6", "/servo/D3"};
-Servo servo_1;
+const String subTopics[] = {"/relay/D5", "/relay/D6", "/servo/D2", "/boolservo/D2"};
+bool CurrentRelayStatus[32];
+Servo *ServosLoc[32];
+
 uint8_t ledState = 1;
 
 const char* pubTopics[] = {"/waterlevel", "/temperature"};
@@ -35,10 +38,15 @@ int value = 0;
 String clientId = "ESP8266Client-";
 
 void setup() {
-  servo_1.attach(2,400,2600);  //D3
+  client.setBufferSize(512);
+  for (int i = 0 ; i < 32; i++) {
+    CurrentRelayStatus[i] = false;
+  }
+  ServosLoc[D2] = new Servo();
+  ServosLoc[D2]->attach(D2, 400, 2600); //D2
   pinMode(LED, OUTPUT);
   delay(2000);
-  servo_1.write(0);
+  ServosLoc[D2]->write(0);
   delay(2000);
   dht.begin();
   clientId += WiFi.macAddress();
@@ -86,20 +94,22 @@ void reconnect() {
     Serial.print("Attempting MQTT connection...");
     Serial.println(clientId);
     if (client.connect(clientId.c_str())) {
-      char registerJson[400];
+      char registerJson[500];
       Serial.println("connected");
-      StaticJsonDocument<400> doc;
+      StaticJsonDocument<500> doc;
       doc["deviceName"] = clientId;
       JsonArray data = doc.createNestedArray("deviceEndpoints");
       JsonObject alias = data.createNestedObject();
-      alias["/relay/D5"] = "Servo";
-      alias["/relay/D6"] = "Relay";
-      alias["/servo/D3"] = "ServoD";
+      alias["/relay/D5"] = "RelayControl";
+      alias["/relay/D6"] = "GiveWater";
+      alias["/servo/D2"] = "FullServoControl";
+      alias["/boolservo/D2"] = "ServoJob";
       JsonArray publishPoints = doc.createNestedArray("publishPoints");
       publishPoints.add("/data/water");
       publishPoints.add("/data/temp");
       publishPoints.add("/data/humidity");
       serializeJson(doc, registerJson);
+      Serial.println(registerJson);
       client.publish("/home/egemeric/register/device", registerJson);
       delay(100);
       subscribeTopics();
@@ -136,47 +146,62 @@ int BoolPinController(byte *payload, int pin) {
   pinMode(pin, OUTPUT);
   if ((char)payload[0] == '1') {
     digitalWrite(pin, HIGH);
+    CurrentRelayStatus[pin] = true;
     return (1);
   }
   else if ((char)payload[0] == '0') {
     digitalWrite(pin, LOW);
+    CurrentRelayStatus[pin] = false;
     return (0);
+  } else if ((char)payload[0] == '2') {
+    CurrentRelayStatus[pin] = !CurrentRelayStatus[pin];
+    digitalWrite(pin, CurrentRelayStatus[pin]);
+    return 2;
   } else {
     Serial.printf("BoolPinController could not understand only give '0' and '1':%c\n", (char)payload[0]);
     return -1;
   }
 }
-int servoControl(int degree) {
-  servo_1.write (degree);
+int servoControl(int degree, int servoPin) {
+  Serial.print(" Servo Control:");
+  Serial.print(degree);
+  ServosLoc[servoPin]->write(degree);
+  delay(100);
+  return (degree);
 }
 
-int ServoMqttController(byte *payload, int pin) {
-
+int ServoJob(int pin) {
+  servoControl(0,pin);
+  delay(100);
+  servoControl(90,pin);
+  delay(100);
+  servoControl(0,pin);
+  delay(100);
+  return pin;
 }
 
 int pwmVal = 0;
-void msgRouter(char *topic, byte *payload , unsigned int length) {
+void msgRouter(char *topic, byte * payload , unsigned int length) {
   String _D5 =  mqttBase + clientId + "/relay/D5";
   String _D6 =  mqttBase + clientId + "/relay/D6";
-  String _D3 =  mqttBase + clientId + "/servo/D3";
+  String _D2 =  mqttBase + clientId + "/servo/D2";
+  String _BD2 =  mqttBase + clientId + "/boolservo/D2";
   if (strcmp(topic, _D5.c_str()) == 0) {
     BoolPinController(payload, D5);
   } else if ((strcmp(topic, _D6.c_str()) == 0)) {
-    BoolPinController(payload, D5);
-  } else if ((strcmp(topic, _D3.c_str()) == 0)) {
+    BoolPinController(payload, D6);
+  } else if ((strcmp(topic, _D2.c_str()) == 0)) {
     payload[length] = '\0';
     pwmVal = atoi((char *)payload);
-    Serial.print(" Servo Control:");
-    Serial.print(pwmVal);
-    servo_1.write(pwmVal);
-    delay(100);
-
+    servoControl(pwmVal, D2);
+  } else if ((strcmp(topic, _BD2.c_str()) == 0)) {
+    ServoJob(D2);
   } else {
     Serial.printf("msg from topic cannot be routed:%s\n", topic);
   }
 
 }
-void callback(char* topic, byte* payload, unsigned int length) {
+void callback(char* topic, byte * payload, unsigned int length) {
   digitalWrite(LED, LOW);
   Serial.print("Message arrived [");
   Serial.print(topic);
@@ -217,7 +242,7 @@ float analogData() {
   return (float)returnVal;
 }
 
-void loop() { 
+void loop() {
   now = millis();
   digitalWrite(LED, HIGH);
   if (!client.connected()) {
@@ -227,7 +252,7 @@ void loop() {
   client.loop();
   sendHeartbeat();
   if (now - lastMsg > 1000 * 120) {
-   
+
     digitalWrite(LED, LOW);
     lastMsg = now;
     sensors_event_t event;
