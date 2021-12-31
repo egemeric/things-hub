@@ -92,7 +92,7 @@ const mqttController = {
         eventData: value,
         DeviceId
       });
-    });
+    }).catch(e=>console.log(e));
   },
 };
 
