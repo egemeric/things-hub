@@ -103,9 +103,7 @@ const mqttController = {
       .catch((e) => console.log(e));
   },
   cameraSync: async (roomName, cameraData) => {
-    console.log(cameraData);
     cameraDatas[roomName] = cameraData;
-    fs.writeFile(`${roomName}.jpg`, cameraData, (err) => console.log(err));
   },
 };
 
