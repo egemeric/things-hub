@@ -1,7 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <Servo.h>
 #include <PubSubClient.h>
-
+#define FEEDLOOP 2
 #include <ArduinoJson.h>
 #include <DHT.h>
 #include <DHT_U.h>
@@ -20,7 +20,7 @@ DHT_Unified dht(DHTPIN, DHTTYPE);
 const char* ssid     = STASSID;
 const char* password = STAPSK;
 const String mqttBase = MQTTBASE;
-const char* mqtt_server = "10.1.1.144";
+const char* mqtt_server = "home.egemeric.gen.tr";
 const String subTopics[] = {"/relay/D5", "/relay/D6", "/servo/D2", "/boolservo/D2"};
 bool CurrentRelayStatus[32];
 Servo *ServosLoc[32];
@@ -43,10 +43,10 @@ void setup() {
     CurrentRelayStatus[i] = false;
   }
   ServosLoc[D2] = new Servo();
-  ServosLoc[D2]->attach(D2, 400, 2600); //D2
+  ServosLoc[D2]->attach(D2); //D2
   pinMode(LED, OUTPUT);
   delay(2000);
-  ServosLoc[D2]->write(0);
+  ServosLoc[D2]->write(100);
   delay(2000);
   dht.begin();
   clientId += WiFi.macAddress();
@@ -83,7 +83,7 @@ void subscribeTopics() {
     snprintf (tmpF, MSG_BUFFER_SIZE, "%s", tmp.c_str() );
     Serial.printf("Subcribed:%s\n", tmpF);
     client.subscribe(tmpF);
-    client.publish((mqttBase + clientId + "/subsribed").c_str() , subTopics[i].c_str());
+    client.publish((mqttBase + clientId + "/subsribed").c_str(), subTopics[i].c_str());
     delay(100);
   }
   delete tmpF;
@@ -166,22 +166,27 @@ int servoControl(int degree, int servoPin) {
   Serial.print(" Servo Control:");
   Serial.print(degree);
   ServosLoc[servoPin]->write(degree);
-  delay(100);
   return (degree);
 }
 
 int ServoJob(int pin) {
-  servoControl(0,pin);
-  delay(100);
-  servoControl(90,pin);
-  delay(100);
-  servoControl(0,pin);
-  delay(100);
+  for (int i = 0; i < FEEDLOOP ; i++) {
+    servoControl(100, pin);
+    delay(100);
+    servoControl(180, pin);
+    delay(200);
+    servoControl(100, pin);
+    delay(100);
+  }
+  servoControl(101, pin);
+  servoControl(100, pin);
+
+
   return pin;
 }
 
 int pwmVal = 0;
-void msgRouter(char *topic, byte * payload , unsigned int length) {
+void msgRouter(char *topic, byte * payload, unsigned int length) {
   String _D5 =  mqttBase + clientId + "/relay/D5";
   String _D6 =  mqttBase + clientId + "/relay/D6";
   String _D2 =  mqttBase + clientId + "/servo/D2";
@@ -219,7 +224,7 @@ void callback(char* topic, byte * payload, unsigned int length) {
 void publishData(float data, String datatype) {
   char databuffer[20];
   sprintf(databuffer, "%f", data);
-  client.publish((mqttBase + clientId + "/data/" + datatype).c_str() , databuffer );
+  client.publish((mqttBase + clientId + "/data/" + datatype).c_str(), databuffer );
 }
 
 unsigned long lastHBMsg = 0;
