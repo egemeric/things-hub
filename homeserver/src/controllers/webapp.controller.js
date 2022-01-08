@@ -1,3 +1,5 @@
+const { cameraDatas } = require("./mqttTopic.controller");
+const stream = require("stream");
 const mqtt = require("../services/mqtt.service");
 const db = require("../models");
 const index = async (req, res) => {
@@ -52,10 +54,37 @@ const chat = (req, res) => {
   res.render("websocket", { page });
 };
 
+const jpegStream = async (req, res) => {
+  let roomCamera = req.query.roomName
+  console.log(roomCamera)
+
+  let data = cameraDatas[roomCamera];
+  if(data === undefined){
+    return res.status(404).send("not found");
+  }
+  console.log(cameraDatas);
+  var multipart = "--totalmjpeg";
+  res.writeHead(200, {
+    "Cache-Control":
+      "no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0",
+    Pragma: "no-cache",
+    Connection: "close",
+    "Content-Type": 'multipart/x-mixed-replace; boundary="' + multipart + '"',
+  });
+  res.write("--" + multipart + "\r\n", "ascii");
+  res.write("Content-Type: image/jpeg\r\n");
+  res.write("Content-Length: " + Buffer.from(data, "binary").length + "\r\n");
+  res.write("\r\n", "ascii");
+  res.write(Buffer.from(data, "binary"));
+  res.write("\r\n", "ascii");
+  res.end();
+};
+
 module.exports = {
   index,
   chat,
   getRooms,
   getDevices,
   getHomeDevices,
+  jpegStream,
 };

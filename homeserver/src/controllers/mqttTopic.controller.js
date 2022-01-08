@@ -1,5 +1,7 @@
 const db = require("../models");
+const fs = require("fs");
 let subscribeds;
+var cameraDatas = {}
 const mqttController = {
   registerDevice: async (home, room, msg) => {
     try {
@@ -57,6 +59,9 @@ const mqttController = {
             );
             await mqtt_client.subscribe([...roomDeviceDataUrl]);
             await mqtt_client.subscribe([...roomDevice]);
+            await mqtt_client.subscribe(
+              `/${home[0].aliasName}/${rooms[room].roomName}/camera`
+            );
           } catch (e) {
             console.log(e);
           }
@@ -84,15 +89,23 @@ const mqttController = {
   },
 
   relayEventLogger: async (deviceName, eventEndpoint, value) => {
-    await db["Device"].findOne({ where: { deviceName } }).then((device) => {
-      let DeviceId = device.id;
-      db["DeviceEvent"].create({
-        date: new Date(),
-        endPoint: eventEndpoint,
-        eventData: value,
-        DeviceId
-      });
-    }).catch(e=>console.log(e));
+    await db["Device"]
+      .findOne({ where: { deviceName } })
+      .then((device) => {
+        let DeviceId = device.id;
+        db["DeviceEvent"].create({
+          date: new Date(),
+          endPoint: eventEndpoint,
+          eventData: value,
+          DeviceId,
+        });
+      })
+      .catch((e) => console.log(e));
+  },
+  cameraSync: async (roomName, cameraData) => {
+    console.log(cameraData);
+    cameraDatas[roomName] = cameraData;
+    fs.writeFile(`${roomName}.jpg`, cameraData, (err) => console.log(err));
   },
 };
 
@@ -114,10 +127,13 @@ const topicRouter = (msg, topic, mqtt_client) => {
     let deviceName = parsedTopic[3];
     let Pin = parsedTopic.pop();
     Pin = "/relay/" + Pin;
-    mqttController.relayEventLogger(deviceName,Pin,msg.toString())
+    mqttController.relayEventLogger(deviceName, Pin, msg.toString());
+  } else if (topic.endsWith("camera")) {
+    let byteData = msg;
+    mqttController.cameraSync(roomName, byteData);
   } else {
     console.error("topic connot be routed:", topic);
   }
 };
 
-module.exports = { topicRouter, mqttController };
+module.exports = { topicRouter, mqttController ,cameraDatas};

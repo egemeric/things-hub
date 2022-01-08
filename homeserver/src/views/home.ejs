@@ -78,10 +78,10 @@
                     <div class="container-fluid">
 
                         <div class="row">
-
                             <% for(var i=0; i < page.Home.length; i++) { %>
                                 <div class="col-lg">
                                     <div class="card">
+
                                         <div class="card-header bg-info">
                                             <strong>
                                                 <h5 class="m-0">Room: <%= page.Home[i].room.roomName%>
@@ -94,8 +94,14 @@
                                                 Room Devices
                                             </div>
                                             <div class="row">
+                                                <div class="col-md-3">
+                                                    <img class="img-fluid" onload="imageRefresh(this, 500); "
+                                                        src="/camera?roomName=<%= page.Home[i].room.roomName%>"
+                                                        alt="Card image cap">
+
+                                                </div>
                                                 <% for(var j=0; j < page.Home[i].room.devices.length; j++){ %>
-                                                    <div class="col-lg-5">
+                                                    <div class="col-md-6">
                                                         <div class="card">
                                                             <div class="card-header bg-dark text-white">
 
@@ -158,7 +164,7 @@
                                                                                                     class="close"
                                                                                                     data-dismiss="modal">&times;</button>
                                                                                             </div>
-                                                                                            <div class="modal-body" >
+                                                                                            <div class="modal-body">
                                                                                                 <p>Data Graphs</p>
                                                                                                 <canvas
                                                                                                     class="chartModal"
@@ -254,20 +260,20 @@
             console.log(datas.temp.map((o) => parseFloat(o.data)));
             temps = await datas?.temp.map((o) => parseFloat(o.data))
             hums = await datas?.humidity.map((o) => parseFloat(o.data))
-            dates = await datas?.temp.map((o) => new Date(o.date).getHours() +":" + new Date(o.date).getMinutes())
+            dates = await datas?.temp.map((o) => new Date(o.date).getHours() + ":" + new Date(o.date).getMinutes())
             const myChart = await new Chart(ctx, {
                 type: "line",
                 data: {
                     labels: dates,
                     datasets: [{
-                        label:"Temperature",
+                        label: "Temperature",
                         fill: false,
                         lineTension: 0,
                         backgroundColor: "rgba(0,0,255,1.0)",
                         borderColor: "rgba(0,0,255,0.1)",
                         data: temps
-                    },{
-                        label:"Humudity",
+                    }, {
+                        label: "Humudity",
                         fill: false,
                         lineTension: 0,
                         backgroundColor: "rgba(233,33,200,1.0)",
@@ -332,6 +338,19 @@
         }
 
     </script>
+
+    <script>
+        function imageRefresh(img, timeout) {
+            setTimeout(function () {
+                var d = new Date;
+                var http = img.src;
+                if (http.indexOf("&d=") != -1) { http = http.split("&d=")[0]; }
+
+                img.src = http + '&d=' + d.getTime();
+            }, timeout);
+        }
+    </script>
+
 
 
 </html>
