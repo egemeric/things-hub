@@ -16,11 +16,11 @@ End devices uses MQTT protocol for comminicating with 'homeserver'.
 To run app enter:
 ```
 docker pull egemeric/mqttapp
-docker run -it  -p '9000:9000' egemeric/mqttapp
+docker run -it  -p '9000:9000' -p '1883:1883' egemeric/mqttapp
 
 # Or build by Own
 docker build . -t <yourtag>
-docker run -it  -p '9000:9000' <yourtag>
+docker run -it  -p '9000:9000' -p '1883:1883' <yourtag>
 
 
 ```
