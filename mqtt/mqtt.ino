@@ -12,7 +12,7 @@
 #define STAPSK  ""
 #define MQTTBASE "/home/egemeric/"
 #endif
-#define DEVICEID "0x0003"
+#define DEVICEID "0x0004"
 #define MSG_BUFFER_SIZE  (256)
 #define DHTTYPE    DHT11
 #define DHTPIN D3
@@ -100,9 +100,9 @@ void reconnect() {
       doc["deviceName"] = clientId;
       JsonArray data = doc.createNestedArray("deviceEndpoints");
       JsonObject alias = data.createNestedObject();
-      alias["/relay/D5"] = "RelayControl";
-      alias["/relay/D6"] = "GiveWater";
-      alias["/servo/D2"] = "FullServoControl";
+      alias["/relay/D5"] = "Test Endpoint";
+      alias["/relay/D6"] = "GiveWater Test";
+      alias["/servo/D2"] = "FullServoControl :D";
       alias["/boolservo/D2"] = "ServoJob";
       JsonArray publishPoints = doc.createNestedArray("publishPoints");
       publishPoints.add("/data/water");
