@@ -8,7 +8,7 @@
 #define RELAYPIN D5
 #ifndef STASSID
 #define STASSID "EGEMERIC2"
-#define STAPSK  "00399-emerdogan-wifi-gate2-"
+#define STAPSK  ""
 #define MQTTBASE "/home/egemeric/"
 #endif
 #define DEVICEID "0x0005"
