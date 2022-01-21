@@ -7,8 +7,8 @@
 #define LED LED_BUILTIN
 #define RELAYPIN D5
 #ifndef STASSID
-#define STASSID ""
-#define STAPSK  ""
+#define STASSID "EGEMERIC2"
+#define STAPSK  "00399-emerdogan-wifi-gate2-"
 #define MQTTBASE "/home/egemeric/"
 #endif
 #define DEVICEID "0x0005"
@@ -100,14 +100,10 @@ void reconnect() {
       doc["deviceName"] = clientId;
       JsonArray data = doc.createNestedArray("deviceEndpoints");
       JsonObject alias = data.createNestedObject();
-      alias["/relay/D5"] = "Test Endpoint";
-      alias["/relay/D6"] = "GiveWater Test";
-      alias["/servo/D2"] = "FullServoControl :D";
-      alias["/boolservo/D2"] = "ServoJob";
+      alias["/relay/D5"] = "Relay D5";
+      alias["/relay/D6"] = "Relay D6";
       JsonArray publishPoints = doc.createNestedArray("publishPoints");
-      publishPoints.add("/data/water");
-      publishPoints.add("/data/temp");
-      publishPoints.add("/data/humidity");
+      publishPoints.add("/data/bmp180");
       serializeJson(doc, registerJson);
       Serial.println(registerJson);
       client.publish("/home/egemeric/register/device", registerJson);
@@ -125,23 +121,6 @@ void reconnect() {
 }
 
 
-void handleRelay(byte *cmd) {
-  char *tmp = (char*)malloc(MSG_BUFFER_SIZE * sizeof(char));
-  snprintf (tmp, MSG_BUFFER_SIZE, "/home/egemeric/%s/light/status", clientId.c_str());
-  if ((char)cmd[0] == '1') {
-    Serial.println("open the light");
-    digitalWrite(RELAYPIN, LOW);
-    client.publish(tmp, "1");
-  } else if ((char)cmd[0] == '0') {
-    Serial.println("close the light");
-    digitalWrite(RELAYPIN, HIGH);
-    client.publish(tmp, "0");
-  } else {
-    yield();
-  }
-
-  free(tmp);
-}
 int BoolPinController(byte *payload, int pin) {
   pinMode(pin, OUTPUT);
   if ((char)payload[0] == '1') {

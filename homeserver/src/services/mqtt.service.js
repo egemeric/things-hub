@@ -1,6 +1,6 @@
 const mqtt = require("mqtt");
 const {topicRouter,mqttController} = require("../controllers/mqttTopic.controller");
-const mqtt_host = "127.0.0.1";
+const mqtt_host = "home.egemeric.gen.tr";
 const mqtt_port = "1883";
 const mqtt_clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
 const db = require("../models");

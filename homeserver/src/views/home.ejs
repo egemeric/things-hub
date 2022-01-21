@@ -95,10 +95,12 @@
                                             </div>
                                             <div class="row">
                                                 <div class=".col-6 col-md-4 p-3">
-                                                    <a href="/camera?roomName=<%= page.Home[i].room.roomName%>"><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModall">
-                                                        Click to view Camera
-                                                      </button></a>
-                                                      
+                                                    <a href="/camera?roomName=<%= page.Home[i].room.roomName%>"><button
+                                                            type="button" class="btn btn-primary" data-toggle="modal"
+                                                            data-target="#exampleModall">
+                                                            Click to view Camera
+                                                        </button></a>
+
                                                 </div>
                                                 <div class=".col-6 col-md-4 p-3">
                                                     <img class="img-fluid" onload="imageRefresh(this, 500); "
@@ -107,8 +109,8 @@
 
                                                 </div>
                                                 <div class=".col-6 col-md-4 p-3"></div>
-                                                
-                                                
+
+
                                                 <% for(var j=0; j < page.Home[i].room.devices.length; j++){ %>
                                                     <div class="col-md-6">
                                                         <div class="card">
@@ -258,46 +260,75 @@
     </script>
 
     <script>
+        var dynamicColors = function () {
+            var r = Math.floor(Math.random() * 255);
+            var g = Math.floor(Math.random() * 255);
+            var b = Math.floor(Math.random() * 255);
+            return "rgb(" + r + "," + g + "," + b + ")";
+        };
+        var myChart;
+        let dataPoints;
         async function getchartData(id) {
             console.log(id);
             var ctx = document.getElementById("Chart-" + id).getContext('2d');
             datas = JSON.parse(await httpRequest("/api/data?deviceName=" + id, 'get'));
-            var types = Object.keys(datas);
+            var types = Object.keys(datas)[0];
+            console.log(types);
+            datas = datas[types];
+            console.log(datas);
+            availableLabels = Object.keys(datas[0]?.data);
+            console.log(availableLabels);
+            let datasets = [];
+            availableLabels.forEach(element => {
+                let color = dynamicColors();
+                datasets.push({
+                    label: element,
+                    fill: false,
+                    lineTension: 0,
+                    backgroundColor: color,
+                    borderColor: color,
+                    data: datas.map((e) => { return e.data[element] })
+                });
+            });
 
-            var xValues = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150];
-            var yValues = [7, 8, 8, 9, 9, 9, 10, 11, 14, 14, 15];
-            console.log(datas.temp.map((o) => parseFloat(o.data)));
-            temps = await datas?.temp.map((o) => parseFloat(o.data))
-            hums = await datas?.humidity.map((o) => parseFloat(o.data))
-            dates = await datas?.temp.map((o) => new Date(o.date).getHours() + ":" + new Date(o.date).getMinutes())
-            const myChart = await new Chart(ctx, {
+            myChart = await new Chart(ctx, {
                 type: "line",
                 data: {
-                    labels: dates,
-                    datasets: [{
-                        label: "Temperature",
-                        fill: false,
-                        lineTension: 0,
-                        backgroundColor: "rgba(0,0,255,1.0)",
-                        borderColor: "rgba(0,0,255,0.1)",
-                        data: temps
-                    }, {
-                        label: "Humudity",
-                        fill: false,
-                        lineTension: 0,
-                        backgroundColor: "rgba(233,33,200,1.0)",
-                        borderColor: "rgba(233,33,200,1.0)",
-                        data: hums
-                    }]
+                    labels: await datas.map((e) => { return new Date(e.createdAt).toLocaleTimeString('tr-TR') }),
+                    datasets: datasets
                 },
                 options: {
-                    legend: { display: true },
+                    plugins: {
+                        decimation: {
+                            enabled: false,
+                            algorithm: 'min-max',
+                        },
+                    },
                     scales: {
-                        yAxes: [{ ticks: { min: -10, max: 100 } }],
+                        x: {
+                            type: 'timeseries',
+
+                        }
                     }
+
+
                 }
             });
 
+        }
+        function removeData(chart) {
+            chart.data.labels.pop();
+            chart.data.datasets.forEach((dataset) => {
+                dataset.data.slice();
+            });
+            chart.update();
+        }
+        function addData(chart, label, data) {
+            chart.data.labels.push(label);
+            chart.data.datasets.forEach((dataset) => {
+                dataset.data.push(data);
+            });
+            chart.update();
         }
 
 
